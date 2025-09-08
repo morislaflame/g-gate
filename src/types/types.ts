@@ -4,3 +4,11 @@ export interface UserInfo {
     balance: number;
     telegramId: number;
 }
+
+export interface WinHistory {
+    id: string;
+    multiplier: number;
+    timestamp: Date;
+    betAmount: number;
+    winAmount: number;
+}

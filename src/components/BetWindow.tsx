@@ -1,15 +1,19 @@
 import { useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import QuickBetButton from './ui/QuickBetButton';
 import PlusIcon from '@/assets/Plus.svg';
 import MinusIcon from '@/assets/Minus.svg';
 import Button from './ui/Button';
+import { Context, type IStoreContext } from '@/store/StoreProvider';
+import { useContext } from 'react';
 
 interface BetWindowProps {
-    userBalance?: number; // Моковый баланс пользователя
+    userBalance?: number;
     onBetChange?: (amount: number) => void;
 }
 
-const BetWindow = ({ userBalance = 10000, onBetChange }: BetWindowProps) => {
+const BetWindow = observer(({ userBalance = 10000, onBetChange }: BetWindowProps) => {
+    const { user } = useContext(Context) as IStoreContext;
     const [betAmount, setBetAmount] = useState<number>(0);
 
     const handleAmountChange = (newAmount: number) => {
@@ -30,6 +34,18 @@ const BetWindow = ({ userBalance = 10000, onBetChange }: BetWindowProps) => {
 
     const decrementAmount = () => {
         handleAmountChange(betAmount - 100);
+    };
+
+    const handleMakeBet = () => {
+        if (betAmount > 0 && user) {
+            // Создаем новый выигрыш
+            const newWin = user.addWinToHistory(betAmount);
+            
+            // Сбрасываем ставку после успешного размещения
+            setBetAmount(0);
+            
+            console.log('Новая ставка размещена:', newWin);
+        }
     };
 
     const quickBetAmounts = [100, 500, 1000, 5000];
@@ -90,7 +106,7 @@ const BetWindow = ({ userBalance = 10000, onBetChange }: BetWindowProps) => {
             <Button
                 text="Сделать ставку"
                 type="primary"
-                onClick={() => handleAmountChange(betAmount)}
+                onClick={handleMakeBet}
                 disabled={betAmount <= 0}
             />
             </div>
@@ -107,6 +123,6 @@ const BetWindow = ({ userBalance = 10000, onBetChange }: BetWindowProps) => {
             </div>
         </div>
     );
-};
+});
 
 export default BetWindow;

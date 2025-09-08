@@ -1,6 +1,7 @@
 import {makeAutoObservable, runInAction } from "mobx";
 import { fetchMyInfo, telegramAuth, check } from "@/http/userAPI";
-import { type UserInfo } from "@/types/types";
+import { type UserInfo, type WinHistory } from "@/types/types";
+import { generateRandomMultiplier, createWinHistoryEntry } from "@/utils/mutiplierUtils";
 
 export default class UserStore {
     _user: UserInfo | null = null;
@@ -10,9 +11,56 @@ export default class UserStore {
     isTooManyRequests = false;
     isServerError = false;
     serverErrorMessage = '';
+    _winHistory: WinHistory[] = []; // История выигрышей
 
     constructor() {
         makeAutoObservable(this);
+        this.initializeMockWinHistory(); // Инициализируем моковые данные
+    }
+
+    // Инициализация моковых данных истории выигрышей
+    initializeMockWinHistory() {
+        const mockHistory: WinHistory[] = [
+            createWinHistoryEntry(100, 2.3),
+            createWinHistoryEntry(500, 0.8),
+            createWinHistoryEntry(1000, 1.5),
+            createWinHistoryEntry(200, 2.8),
+            createWinHistoryEntry(300, 0.6),
+            createWinHistoryEntry(1500, 1.2),
+            createWinHistoryEntry(800, 2.1),
+            createWinHistoryEntry(400, 0.9),
+            createWinHistoryEntry(600, 1.8),
+            createWinHistoryEntry(1200, 2.5),
+        ];
+        
+        // Сортируем по времени (новые сверху)
+        this._winHistory = mockHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    }
+
+    // Метод для добавления нового выигрыша
+    addWinToHistory(betAmount: number) {
+        const multiplier = generateRandomMultiplier();
+        const newWin = createWinHistoryEntry(betAmount, multiplier);
+        
+        runInAction(() => {
+            // Добавляем в начало массива
+            this._winHistory.unshift(newWin);
+            
+            // Обновляем баланс пользователя
+            if (this._user) {
+                // Сначала списываем ставку
+                this._user.balance -= betAmount;
+                // Затем добавляем выигрыш
+                this._user.balance += newWin.winAmount;
+            }
+        });
+        
+        return newWin;
+    }
+
+    // Метод для получения последних N выигрышей
+    getRecentWins(count: number = 10): WinHistory[] {
+        return this._winHistory.slice(0, count);
     }
 
     setIsAuth(bool: boolean) {
@@ -108,9 +156,13 @@ export default class UserStore {
     get loading() {
         return this._loading;
     }
-    
+
+    get winHistory() {
+        return this._winHistory;
+    }
+
     // Добавляем моковый баланс для демонстрации
     get userBalance() {
-        return this._user?.balance || 1000; // Моковый баланс
+        return this._user?.balance || 10000; // Моковый баланс
     }
 }
