@@ -109,4 +109,8 @@ export default class UserStore {
         return this._loading;
     }
     
+    // Добавляем моковый баланс для демонстрации
+    get userBalance() {
+        return this._user?.balance || 1000; // Моковый баланс
+    }
 }

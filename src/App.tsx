@@ -67,11 +67,9 @@ const App = observer(() => {
 
   return (
       <BrowserRouter>
-        <div>
             <Suspense fallback={<LoadingIndicator />}>
               <AppRouter />
             </Suspense>
-        </div>
       </BrowserRouter>
   )
 });
