@@ -6,21 +6,25 @@ import MinusIcon from '@/assets/Minus.svg';
 import Button from './ui/Button';
 import { Context, type IStoreContext } from '@/store/StoreProvider';
 import { useContext } from 'react';
+import { useHapticFeedback } from '@/utils/useHapticFeedback';
 
 interface BetWindowProps {
     userBalance?: number;
     onBetChange?: (amount: number) => void;
+    onBetPlaced?: (multiplier: number) => void;
 }
 
-const BetWindow = observer(({ userBalance = 10000, onBetChange }: BetWindowProps) => {
+const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: BetWindowProps) => {
     const { user } = useContext(Context) as IStoreContext;
     const [betAmount, setBetAmount] = useState<number>(0);
+    const { hapticImpact } = useHapticFeedback();
 
     const handleAmountChange = (newAmount: number) => {
         // Проверяем, что сумма не превышает баланс и не отрицательная
         const validAmount = Math.max(0, Math.min(newAmount, userBalance));
         setBetAmount(validAmount);
         onBetChange?.(validAmount);
+        hapticImpact('soft');
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,16 +34,23 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange }: BetWindowProps
 
     const incrementAmount = () => {
         handleAmountChange(betAmount + 100);
+        
     };
 
     const decrementAmount = () => {
+        hapticImpact('soft');
         handleAmountChange(betAmount - 100);
+        
     };
 
     const handleMakeBet = () => {
+        hapticImpact('soft');
         if (betAmount > 0 && user) {
             // Создаем новый выигрыш
             const newWin = user.addWinToHistory(betAmount);
+            
+            // Запускаем анимацию монетки с мультипликатором
+            onBetPlaced?.(newWin.multiplier);
             
             // Сбрасываем ставку после успешного размещения
             setBetAmount(0);

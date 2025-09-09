@@ -1,7 +1,9 @@
 @import "tailwindcss";
+@import url('./fonts.css');
 
 @theme {
-    --font-display: "Orbitron", "sans-serif";
+    --font-display: "SF Pro Text", "Orbitron", "sans-serif";
+    --font-sans: "SF Pro Text", "system-ui", "sans-serif";
 
     --color-main-bg: linear-gradient(180deg, hsla(0, 0%, 0%, 1) 0%, hsla(170, 77%, 20%, 1) 100%);
     --color-main-bg-secondary: hsla(170, 77%, 20%, 1);
@@ -76,6 +78,7 @@ body {
     width: 100vw;
     height: 100vh;
     color: white;
+    font-family: "SF Pro Text", system-ui, sans-serif;
 }
 
 #root {

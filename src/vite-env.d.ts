@@ -8,6 +8,7 @@ interface TelegramWebApp {
       initDataUnsafe: TelegramWebAppInitDataUnsafe;
       HapticFeedback?: {
         impactOccurred: (style: string) => void;
+        notificationOccurred: (type: string) => void;
       };
       openInvoice: (url: string, callback: (status: string) => void) => void;
       BackButton: {
