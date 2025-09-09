@@ -1,5 +1,5 @@
-import { getCounterAnimationDuration } from '@/utils/counterDuration';
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { useAnimationSpeed } from '@/contexts/AnimationSpeedContext';
 
 interface CounterProps {
     className?: string;
@@ -15,8 +15,8 @@ const Counter = forwardRef<CounterRef, CounterProps>(({ className = '' }, ref) =
     const [targetValue, setTargetValue] = useState<number>(0);
     const animationRef = useRef<number>(0);
     const startTimeRef = useRef<number>(0);
-
-    const [isQuickAnimation, setIsQuickAnimation] = useState<boolean>(false);
+    
+    const { getDuration } = useAnimationSpeed();
 
     // Функция для запуска анимации
     const startCounterAnimation = (targetMultiplier: number) => {
@@ -28,13 +28,6 @@ const Counter = forwardRef<CounterRef, CounterProps>(({ className = '' }, ref) =
         startTimeRef.current = performance.now();
     };
 
-    const startQuickAnimation = () => {
-        setIsQuickAnimation(true);
-    };
-    
-    const stopQuickAnimation = () => {
-        setIsQuickAnimation(false);
-    };
 
     // Экспортируем метод для запуска анимации
     useImperativeHandle(ref, () => ({
@@ -47,8 +40,7 @@ const Counter = forwardRef<CounterRef, CounterProps>(({ className = '' }, ref) =
 
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTimeRef.current;
-            
-            const duration = getCounterAnimationDuration(targetValue, isQuickAnimation ? 1000 : 3000);
+            const duration = getDuration(targetValue);
             
             if (elapsed < duration) {
                 // Используем easeOutCubic для плавного замедления
@@ -73,28 +65,21 @@ const Counter = forwardRef<CounterRef, CounterProps>(({ className = '' }, ref) =
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [isAnimating, targetValue]);
+    }, [isAnimating, targetValue, getDuration]);
 
-    // Форматирование значения
     const formatValue = (value: number): string => {
         return value.toFixed(2);
     };
 
+
     return (
         <div className={`flex items-center justify-center ${className}`}>
             <div className="text-center">
+                <div className="text-sm text-gray-400 mb-1">Множитель</div>
                 <div 
                     className={`text-4xl font-bold transition-colors duration-300 text-white`}
-                    // style={{
-                    //     textShadow: '0 0 10px currentColor',
-                    //     filter: 'drop-shadow(0 0 5px currentColor)'
-                    // }}
                 >
                     {formatValue(currentValue)}x
-                </div>
-                <div className="flex gap-2 mt-2">   
-                <button className="text-sm text-gray-400 border border-gray-400 rounded-md px-2 py-1" onClick={startQuickAnimation}>fast</button>
-                <button className="text-sm text-gray-400 border border-gray-400 rounded-md px-2 py-1" onClick={stopQuickAnimation}>slow</button>
                 </div>
             </div>
         </div>

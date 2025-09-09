@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-// import { Context, type IStoreContext } from '@/store/StoreProvider';
-// import { useContext } from 'react';
+import { useAnimationSpeed } from '@/contexts/AnimationSpeedContext';
 import BackImage from '@/assets/Back.png';
 import CoinImage from '@/assets/Coin.png';
 
@@ -16,20 +15,22 @@ export interface CoinAnimationRef {
 const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(({ className = '' }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationRef = useRef<number>(0);
-    // const { user } = useContext(Context) as IStoreContext;
     const [isAnimating, setIsAnimating] = useState(false);
     const [currentMultiplier, setCurrentMultiplier] = useState<number | null>(null);
+    
+    const { getDuration } = useAnimationSpeed();
     
     // Состояние анимации
     const animationState = useRef({
         backgroundOffset: 0,
-        coinX: -100, // Начинаем за левым краем
+        coinX: -200, // Начинаем за левым краем
         coinY: 0,
         coinRotation: 0,
         coinScale: 1,
         animationProgress: 0,
         isCoinVisible: false,
-        backgroundSpeed: 0.5, // Скорость движения фона
+        isBackgroundMoving: false, // Фон движется только во время анимации монетки
+        backgroundSpeed: 0.8, // Скорость движения фона (меньше чем у монетки)
     });
 
     // Загружаем изображения
@@ -51,19 +52,22 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
     const startCoinAnimation = (multiplier: number) => {
         if (isAnimating) return;
         
+        console.log('Запуск анимации монетки с множителем:', multiplier);
+        console.log('Фон начинает двигаться');
         setCurrentMultiplier(multiplier);
         setIsAnimating(true);
         
         // Сбрасываем состояние анимации
         animationState.current = {
             backgroundOffset: 0,
-            coinX: -100,
+            coinX: -200, // Начинаем дальше за левым краем
             coinY: 0,
             coinRotation: 0,
             coinScale: 1,
             animationProgress: 0,
             isCoinVisible: true,
-            backgroundSpeed: 0.5,
+            isBackgroundMoving: true, // Запускаем движение фона
+            backgroundSpeed: 0.3, // Скорость фона меньше чем у монетки
         };
     };
 
@@ -73,7 +77,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
     }));
 
     // Функция отрисовки
-    const draw = () => {
+    const draw = useCallback(() => {
         const canvas = canvasRef.current;
         if (!canvas || !backImage || !coinImage) return;
 
@@ -103,29 +107,83 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         if (animationState.current.isCoinVisible && currentMultiplier) {
             const progress = animationState.current.animationProgress;
             
-            // Рассчитываем расстояние качения в зависимости от мультипликатора
-            // Чем больше мультипликатор, тем дальше катится монетка
-            const maxDistance = width + 200; // Максимальное расстояние
-            const multiplierFactor = Math.min(currentMultiplier / 3.0, 1); // Нормализуем до 0-1
-            const targetDistance = maxDistance * (0.3 + multiplierFactor * 0.7); // От 30% до 100% от максимального расстояния
+            // Три фазы анимации
+            const centerX = width / 2;
+            const startX = -200;
+            const endX = width + 200;
             
-            // Позиция монетки
-            animationState.current.coinX = -100 + (targetDistance * progress);
+            // Фазы анимации (в процентах от общего времени)
+            const enterPhase = 0.15; // 15% времени - выезд на центр
+            const spinPhase = 0.7;   // 70% времени - вращение в центре
             
-            // Вращение монетки (зависит от пройденного расстояния)
-            animationState.current.coinRotation = progress * targetDistance * 0.1;
+            // Отладочная информация
+            if (progress < 0.1) {
+                let phase = 'enter';
+                if (progress > enterPhase + spinPhase) phase = 'exit';
+                else if (progress > enterPhase) phase = 'spin';
+                
+                console.log('Анимация монетки:', { 
+                    progress: progress.toFixed(3), 
+                    phase, 
+                    coinX: animationState.current.coinX.toFixed(1), 
+                    multiplier: currentMultiplier 
+                });
+            }
             
-            // Небольшое покачивание по Y
-            animationState.current.coinY = Math.sin(progress * Math.PI * 4) * 5;
+            let coinX, coinRotation, coinY, coinScale;
             
-            // Масштаб (небольшое изменение размера во время качения)
-            animationState.current.coinScale = 1 + Math.sin(progress * Math.PI * 8) * 0.1;
+            // Постоянная скорость вращения (радиан в секунду)
+            const rotationSpeed = 13; // 8 радиан в секунду = примерно 1.27 оборота в секунду
+            const totalDuration = getDuration(currentMultiplier);
+            const elapsedTime = progress * totalDuration; // Время в миллисекундах
+            const baseRotation = (elapsedTime / 1000) * rotationSpeed; // Конвертируем в секунды
+            
+            // Постоянная скорость движения (пикселей в секунду)
+            const movementSpeed = 800; // пикселей в секунду
+            const elapsedSeconds = (progress * totalDuration) / 1000;
+            
+            if (progress <= enterPhase) {
+                // Фаза 1: Резкий выезд на центр с постоянной скоростью
+                const distance = elapsedSeconds * movementSpeed;
+                const maxDistance = centerX - startX;
+                const phaseProgress = Math.min(distance / maxDistance, 1);
+                const easeOut = 1 - Math.pow(1 - phaseProgress, 3); // Ease out cubic
+                coinX = startX + (centerX - startX) * easeOut;
+                coinRotation = baseRotation;
+                coinY = Math.sin(phaseProgress * Math.PI * 2) * 3;
+                coinScale = 1 + Math.sin(phaseProgress * Math.PI * 4) * 0.1;
+                
+            } else if (progress <= enterPhase + spinPhase) {
+                coinX = centerX;
+                coinRotation = baseRotation;
+                coinY = Math.sin(20 * Math.PI * 8) * 2;
+                coinScale = 1 + Math.sin(20 * Math.PI * 16) * 0.05;
+                
+            } else {
+                // Фаза 3: Резкий уезд с центра с постоянной скоростью
+                const exitStartTime = (enterPhase + spinPhase) * totalDuration / 1000;
+                const exitElapsedTime = elapsedSeconds - exitStartTime;
+                const distance = exitElapsedTime * movementSpeed;
+                const maxDistance = endX - centerX;
+                const phaseProgress = Math.min(distance / maxDistance, 1);
+                const easeIn = Math.pow(phaseProgress, 3); // Ease in cubic
+                coinX = centerX + (endX - centerX) * easeIn;
+                coinRotation = baseRotation;
+                coinY = Math.sin(phaseProgress * Math.PI * 2) * 3;
+                coinScale = 1 + Math.sin(phaseProgress * Math.PI * 4) * 0.1;
+            }
+            
+            // Обновляем состояние
+            animationState.current.coinX = coinX;
+            animationState.current.coinRotation = coinRotation;
+            animationState.current.coinY = coinY;
+            animationState.current.coinScale = coinScale;
 
             // Рисуем монетку только если она еще видна на экране
-            if (animationState.current.coinX > -coinImage.width && animationState.current.coinX < width + coinImage.width) {
+            if (animationState.current.coinX > -coinImage.width * 2 && animationState.current.coinX < width + coinImage.width) {
                 ctx.save();
                 ctx.translate(
-                    animationState.current.coinX + coinImage.width / 2,
+                    animationState.current.coinX - coinImage.width / 2,
                     height / 2 + animationState.current.coinY
                 );
                 ctx.rotate(animationState.current.coinRotation);
@@ -141,30 +199,37 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             }
 
             // Проверяем, закончилась ли анимация - монетка полностью уехала за правый край
-            if (animationState.current.coinX > width + coinImage.width) {
+            if (animationState.current.coinX > width + coinImage.width || progress >= 1) {
+                console.log('Анимация завершена - монетка уехала за край или достигнут конец прогресса');
                 animationState.current.isCoinVisible = false;
+                animationState.current.isBackgroundMoving = false; // Останавливаем движение фона
                 setIsAnimating(false);
                 setCurrentMultiplier(null);
             }
         }
 
-        // Обновляем прогресс анимации
-        if (animationState.current.isCoinVisible) {
-            animationState.current.animationProgress += 0.02; // Увеличиваем скорость анимации
+        // Обновляем прогресс анимации с учетом скорости из контекста
+        if (animationState.current.isCoinVisible && currentMultiplier) {
+            const totalDuration = getDuration(currentMultiplier);
+            const frameDuration = 16; // ~60 FPS
+            const progressIncrement = frameDuration / totalDuration;
+            
+            animationState.current.animationProgress += progressIncrement;
             if (animationState.current.animationProgress >= 1) {
                 animationState.current.animationProgress = 1;
                 // Принудительно завершаем анимацию, если прогресс достиг 100%
-                if (animationState.current.isCoinVisible) {
-                    animationState.current.isCoinVisible = false;
-                    setIsAnimating(false);
-                    setCurrentMultiplier(null);
-                }
+                animationState.current.isCoinVisible = false;
+                animationState.current.isBackgroundMoving = false; // Останавливаем движение фона
+                setIsAnimating(false);
+                setCurrentMultiplier(null);
             }
         }
 
-        // Обновляем смещение фона
-        animationState.current.backgroundOffset += animationState.current.backgroundSpeed;
-    };
+        // Обновляем смещение фона только если фон должен двигаться
+        if (animationState.current.isBackgroundMoving) {
+            animationState.current.backgroundOffset += animationState.current.backgroundSpeed;
+        }
+    }, [backImage, coinImage, currentMultiplier, getDuration]);
 
     // Основной цикл анимации
     useEffect(() => {
@@ -180,7 +245,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [backImage, coinImage, isAnimating, currentMultiplier]);
+    }, [draw]);
 
     // Обработка изменения размера окна
     useEffect(() => {
