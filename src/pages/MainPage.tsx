@@ -26,9 +26,9 @@ const MainPage = () => {
     return (
         <AnimationSpeedProvider>
             <div className="flex flex-col justify-end h-full w-full p-5">
-                <div className="flex flex-col relative">
+                <div className="flex flex-col relative rounded-xl">
                     <CoinAnimation ref={coinAnimationRef} />
-                    <Counter ref={counterRef} className="absolute top-0 right-0" />
+                    <Counter ref={counterRef} className="absolute top-4 right-4" />
                     
                     <WinHistoryFeed />
                 </div>

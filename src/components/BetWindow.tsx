@@ -62,7 +62,12 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: B
     const quickBetAmounts = [100, 500, 1000, 5000];
 
     return (
-        <div className="bg-main-bg-secondary p-4 rounded-lg w-full">
+        <div className="bg-main-bg-secondary p-4 w-full"
+        style={{
+            borderBottomLeftRadius: '12px',
+            borderBottomRightRadius: '12px'
+        }}
+        >
             {/* Инпут с кнопками +/- */}
             <div className="flex items-center gap-2 mb-4">
                 <button

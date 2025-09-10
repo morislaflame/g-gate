@@ -75,9 +75,8 @@ const Counter = forwardRef<CounterRef, CounterProps>(({ className = '' }, ref) =
     return (
         <div className={`flex items-center justify-center ${className}`}>
             <div className="text-center">
-                <div className="text-sm text-gray-400 mb-1">Множитель</div>
                 <div 
-                    className={`text-4xl font-bold transition-colors duration-300 text-white`}
+                    className={`text-4xl font-semibold transition-colors duration-300 text-white`}
                 >
                     {formatValue(currentValue)}x
                 </div>

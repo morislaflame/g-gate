@@ -233,7 +233,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                 const shadowScaleY = 0.1 * animationState.current.coinScale; // Вертикальный масштаб тени
                 ctx.ellipse(
                     0, 0, 
-                    coinImage.width / 2 * shadowScaleX, // Тень масштабируется вместе с монеткой
+                    coinImage.width / 2 * shadowScaleX * 0.8, // Тень масштабируется вместе с монеткой
                     coinImage.height / 2 * shadowScaleY, // Тень масштабируется вместе с монеткой
                     0, 0, 2 * Math.PI
                 );
@@ -353,10 +353,12 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         <div className={`relative w-full ${className}`}>
             <canvas
                 ref={canvasRef}
-                className="w-full h-full"
+                className="w-full h-full overflow-hidden"
                 style={{ 
                     background: 'transparent',
-                    display: 'block'
+                    display: 'block',
+                    borderTopLeftRadius: '12px',
+                    borderTopRightRadius: '12px'
                 }}
             />
         </div>
