@@ -30,6 +30,9 @@
     --color-chip-tertiary: hsla(161, 67%, 38%, 1);
     --color-chip-quaternary: hsla(183, 62%, 46%, 1);
 
+    --color-balance-change-primary: hsla(166, 67%, 38%, 1);
+    --color-balance-change-secondary: hsla(0, 100%, 62%, 1);
+
 
     /* Кастомные размеры шрифта */
     --font-size-28: 28px;

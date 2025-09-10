@@ -2,6 +2,7 @@ import BetWindow from "@/components/BetWindow";
 import WinHistoryFeed from "@/components/WinHistoryFeed";
 import CoinAnimation, { type CoinAnimationRef } from "@/components/CoinAnimation";
 import Counter, { type CounterRef } from "@/components/ui/Counter";
+import BalanceChange, { type BalanceChangeRef } from "@/components/BalanceChange";
 // import SpeedToggle from "@/components/ui/SpeedToggle";
 import { AnimationSpeedProvider } from "@/contexts/AnimationSpeedContext";
 import { Context, type IStoreContext } from "@/store/StoreProvider";
@@ -11,10 +12,11 @@ const MainPage = () => {
     const { user } = useContext(Context) as IStoreContext;
     const coinAnimationRef = useRef<CoinAnimationRef>(null);
     const counterRef = useRef<CounterRef>(null);
+    const balanceChangeRef = useRef<BalanceChangeRef>(null);
     const [isAnimating, setIsAnimating] = useState(false);
 
-    const handleBetPlaced = (multiplier: number) => {
-        console.log('MainPage: handleBetPlaced вызвана с множителем:', multiplier);
+    const handleBetPlaced = (multiplier: number, betAmount: number) => {
+        console.log('MainPage: handleBetPlaced вызвана с множителем:', multiplier, 'ставка:', betAmount);
         console.log('MainPage: coinAnimationRef.current:', coinAnimationRef.current);
         
         // Устанавливаем состояние анимации
@@ -25,6 +27,15 @@ const MainPage = () => {
         
         // Запускаем анимацию счетчика
         counterRef.current?.startAnimation(multiplier);
+        
+        // Запускаем анимацию изменения баланса
+        const finalAmount = Math.round(betAmount * multiplier);
+        console.log('MainPage: Расчет финальной суммы', { betAmount, multiplier, finalAmount });
+        
+        // Небольшая задержка чтобы убедиться что компонент готов
+        setTimeout(() => {
+            balanceChangeRef.current?.startAnimation(betAmount, finalAmount);
+        }, 10);
         
         // Проверяем завершение анимации через интервал
         const checkAnimationComplete = () => {
@@ -44,8 +55,11 @@ const MainPage = () => {
             <div className="flex flex-col justify-end h-full w-full p-5">
                 <div className="flex flex-col relative rounded-xl">
                     <CoinAnimation ref={coinAnimationRef} />
-                    <Counter ref={counterRef} className="absolute top-4 right-4" />
-                    
+                    <div className="flex items-center justify-between gap-2 w-full absolute top-0 left-0 p-4">
+                        
+                        <BalanceChange ref={balanceChangeRef} />
+                        <Counter ref={counterRef}  />
+                    </div>
                     <WinHistoryFeed />
                 </div>
                 {/* <SpeedToggle className="absolute bottom-0 left-0" /> */}

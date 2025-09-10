@@ -60,7 +60,6 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         if (isAnimating) return;
         
         console.log('Запуск анимации монетки с множителем:', multiplier);
-        console.log('Фон начинает двигаться');
         
         // Haptic feedback при запуске анимации
         hapticImpact('medium');
@@ -143,25 +142,25 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             const spinPhase = 0.7;   // 70% времени - вращение в центре
             
             // Отладочная информация
-            if (progress < 0.1) {
-                let phase = 'enter';
-                if (progress > enterPhase + spinPhase) phase = 'exit';
-                else if (progress > enterPhase) phase = 'spin';
+            // if (progress < 0.1) {
+            //     let phase = 'enter';
+            //     if (progress > enterPhase + spinPhase) phase = 'exit';
+            //     else if (progress > enterPhase) phase = 'spin';
                 
-                const baseCoinScale = Math.min(width / 358, height / 412);
-                const finalCoinScale = baseCoinScale * animationState.current.coinScale;
+            //     const baseCoinScale = Math.min(width / 358, height / 412);
+            //     const finalCoinScale = baseCoinScale * animationState.current.coinScale;
                 
-                console.log('Анимация монетки:', { 
-                    progress: progress.toFixed(3), 
-                    phase, 
-                    coinX: animationState.current.coinX.toFixed(1), 
-                    coinY: animationState.current.coinY.toFixed(1),
-                    multiplier: currentMultiplier,
-                    canvasSize: { width, height },
-                    baseCoinScale: baseCoinScale.toFixed(3),
-                    finalCoinScale: finalCoinScale.toFixed(3)
-                });
-            }
+            //     console.log('Анимация монетки:', { 
+            //         progress: progress.toFixed(3), 
+            //         phase, 
+            //         coinX: animationState.current.coinX.toFixed(1), 
+            //         coinY: animationState.current.coinY.toFixed(1),
+            //         multiplier: currentMultiplier,
+            //         canvasSize: { width, height },
+            //         baseCoinScale: baseCoinScale.toFixed(3),
+            //         finalCoinScale: finalCoinScale.toFixed(3)
+            //     });
+            // }
             
             let coinX, coinRotation, coinY, coinScale;
             
@@ -289,7 +288,6 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
 
             // Проверяем, закончилась ли анимация - монетка полностью уехала за правый край
             if (animationState.current.coinX > width + scaledCoinWidth || progress >= 1) {
-                console.log('Анимация завершена - монетка уехала за край или достигнут конец прогресса');
                 
                 // Haptic feedback при завершении анимации
                 hapticNotification('success');

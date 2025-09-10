@@ -11,7 +11,7 @@ import { useHapticFeedback } from '@/utils/useHapticFeedback';
 interface BetWindowProps {
     userBalance?: number;
     onBetChange?: (amount: number) => void;
-    onBetPlaced?: (multiplier: number) => void;
+    onBetPlaced?: (multiplier: number, betAmount: number) => void;
     isAnimating?: boolean; // Флаг блокировки во время анимации
 }
 
@@ -51,7 +51,7 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced, isA
             const newWin = user.addWinToHistory(betAmount);
             
             // Запускаем анимацию монетки с мультипликатором
-            onBetPlaced?.(newWin.multiplier);
+            onBetPlaced?.(newWin.multiplier, betAmount);
             
             // Сбрасываем ставку после успешного размещения
             setBetAmount(0);
