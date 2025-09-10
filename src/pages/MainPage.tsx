@@ -5,22 +5,38 @@ import Counter, { type CounterRef } from "@/components/ui/Counter";
 // import SpeedToggle from "@/components/ui/SpeedToggle";
 import { AnimationSpeedProvider } from "@/contexts/AnimationSpeedContext";
 import { Context, type IStoreContext } from "@/store/StoreProvider";
-import { useContext, useRef } from "react";
+import { useContext, useRef, useState } from "react";
 
 const MainPage = () => {
     const { user } = useContext(Context) as IStoreContext;
     const coinAnimationRef = useRef<CoinAnimationRef>(null);
     const counterRef = useRef<CounterRef>(null);
+    const [isAnimating, setIsAnimating] = useState(false);
 
     const handleBetPlaced = (multiplier: number) => {
         console.log('MainPage: handleBetPlaced вызвана с множителем:', multiplier);
         console.log('MainPage: coinAnimationRef.current:', coinAnimationRef.current);
+        
+        // Устанавливаем состояние анимации
+        setIsAnimating(true);
         
         // Запускаем анимацию монетки
         coinAnimationRef.current?.startAnimation(multiplier);
         
         // Запускаем анимацию счетчика
         counterRef.current?.startAnimation(multiplier);
+        
+        // Проверяем завершение анимации через интервал
+        const checkAnimationComplete = () => {
+            if (coinAnimationRef.current && !coinAnimationRef.current.isAnimating()) {
+                setIsAnimating(false);
+            } else {
+                setTimeout(checkAnimationComplete, 100); // Проверяем каждые 100мс
+            }
+        };
+        
+        // Начинаем проверку через небольшую задержку
+        setTimeout(checkAnimationComplete, 100);
     };
 
     return (
@@ -36,6 +52,7 @@ const MainPage = () => {
                 <BetWindow 
                     userBalance={user.userBalance} 
                     onBetPlaced={handleBetPlaced}
+                    isAnimating={isAnimating}
                 />
             </div>
         </AnimationSpeedProvider>

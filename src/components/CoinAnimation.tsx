@@ -12,6 +12,7 @@ interface CoinAnimationProps {
 export interface CoinAnimationRef {
     startAnimation: (multiplier: number) => void;
     setBackgroundHeight: (height: number | null) => void;
+    isAnimating: () => boolean;
 }
 
 const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(({ className = '' }, ref) => {
@@ -86,7 +87,8 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
     // Экспортируем методы для управления анимацией
     useImperativeHandle(ref, () => ({
         startAnimation: startCoinAnimation,
-        setBackgroundHeight: setBackgroundHeight
+        setBackgroundHeight: setBackgroundHeight,
+        isAnimating: () => isAnimating
     }));
 
     // Функция отрисовки

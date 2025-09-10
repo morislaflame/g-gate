@@ -12,9 +12,10 @@ interface BetWindowProps {
     userBalance?: number;
     onBetChange?: (amount: number) => void;
     onBetPlaced?: (multiplier: number) => void;
+    isAnimating?: boolean; // Флаг блокировки во время анимации
 }
 
-const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: BetWindowProps) => {
+const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced, isAnimating = false }: BetWindowProps) => {
     const { user } = useContext(Context) as IStoreContext;
     const [betAmount, setBetAmount] = useState<number>(0);
     const { hapticImpact, hapticNotification } = useHapticFeedback();
@@ -73,7 +74,7 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: B
                 <button
                     className="bg-button-price hover:bg-opacity-80 active:scale-95 transition-all duration-100 flex items-center justify-center w-[36px] h-[36px] rounded-md border-2 border-border-button text-white disabled:opacity-disabled"
                     onClick={decrementAmount}
-                    disabled={betAmount <= 0}
+                    disabled={betAmount <= 0 || isAnimating}
                 >
                     <img src={MinusIcon} alt="Minus" className="w-4 h-4" />
                 </button>
@@ -97,7 +98,7 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: B
                 <button
                     className="bg-button-price hover:bg-opacity-80 active:scale-95 transition-all duration-100 flex items-center justify-center w-[36px] h-[36px] rounded-md border-2 border-border-button text-white disabled:opacity-disabled"
                     onClick={incrementAmount}
-                    disabled={betAmount >= userBalance}
+                    disabled={betAmount >= userBalance || isAnimating}
                 >
                     <img src={PlusIcon} alt="Plus" className="w-4 h-4" />
                 </button>
@@ -114,7 +115,7 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: B
                             key={amount}
                             amount={amount}
                             onClick={handleAmountChange}
-                            disabled={amount > userBalance}
+                            disabled={amount > userBalance || isAnimating}
                         />
                     ))}
                 </div>
@@ -123,7 +124,7 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: B
                 text="Сделать ставку"
                 type="primary"
                 onClick={handleMakeBet}
-                disabled={betAmount <= 0}
+                disabled={betAmount <= 0 || isAnimating}
             />
             </div>
 
