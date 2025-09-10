@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export type AnimationSpeed = 'slow' | 'fast';
 
@@ -18,7 +18,7 @@ export const AnimationSpeedProvider = ({ children }: AnimationSpeedProviderProps
     const [speed, setSpeed] = useState<AnimationSpeed>('slow');
 
     const getDuration = (targetValue: number): number => {
-        const baseDuration = speed === 'fast' ? 1000 : 3000; // 1с для быстрого, 3с для медленного
+        const baseDuration = speed === 'fast' ? 1000 : 5000; // 1с для быстрого, 3с для медленного
         return Math.max(0.5, Math.min(targetValue, 5)) * baseDuration;
     };
 

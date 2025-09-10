@@ -69,7 +69,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             animationProgress: 0,
             isCoinVisible: true,
             isBackgroundMoving: true, // Запускаем движение фона
-            backgroundSpeed: 0.3, // Скорость фона меньше чем у монетки
+            backgroundSpeed: 0.7, // Скорость фона меньше чем у монетки
         };
     };
 
@@ -156,6 +156,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                     progress: progress.toFixed(3), 
                     phase, 
                     coinX: animationState.current.coinX.toFixed(1), 
+                    coinY: animationState.current.coinY.toFixed(1),
                     multiplier: currentMultiplier,
                     canvasSize: { width, height },
                     baseCoinScale: baseCoinScale.toFixed(3),
@@ -187,20 +188,29 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                 coinScale = 1 + Math.sin(phaseProgress * Math.PI * 4) * 0.1;
                 
             } else if (progress <= enterPhase + spinPhase) {
-                coinX = centerX;
+                // Средняя фаза: монетка в центре с покачиванием вперед-назад
+                const spinElapsedTime = elapsedSeconds - (enterPhase * totalDuration / 1000);
+                const horizontalWobble = Math.sin(spinElapsedTime * 2.5) * 20; // Покачивание вперед-назад на 8 пикселей
+                coinX = centerX + horizontalWobble;
                 coinRotation = baseRotation;
-                coinY = Math.sin(20 * Math.PI * 8) * 2;
-                coinScale = 1 + Math.sin(20 * Math.PI * 16) * 0.05;
+                coinY = Math.sin(spinElapsedTime * 8) * 2; // Вертикальное покачивание
+                coinScale = 1 + Math.sin(spinElapsedTime * 16) * 0.01; // Масштабирование
                 
             } else {
-                // Фаза 3: Резкий уезд с центра с постоянной скоростью
+                // Фаза 3: Резкий уезд из текущего положения с постоянной скоростью
                 const exitStartTime = (enterPhase + spinPhase) * totalDuration / 1000;
                 const exitElapsedTime = elapsedSeconds - exitStartTime;
+                
+                // Получаем позицию, откуда начинаем уезжать (последняя позиция в средней фазе)
+                const lastSpinTime = (enterPhase + spinPhase) * totalDuration / 1000 - (enterPhase * totalDuration / 1000);
+                const lastHorizontalWobble = Math.sin(lastSpinTime * 2.5) * 8;
+                const exitStartX = centerX + lastHorizontalWobble;
+                
                 const distance = exitElapsedTime * movementSpeed;
-                const maxDistance = endX - centerX;
+                const maxDistance = endX - exitStartX;
                 const phaseProgress = Math.min(distance / maxDistance, 1);
                 const easeIn = Math.pow(phaseProgress, 3); // Ease in cubic
-                coinX = centerX + (endX - centerX) * easeIn;
+                coinX = exitStartX + (endX - exitStartX) * easeIn;
                 coinRotation = baseRotation;
                 coinY = Math.sin(phaseProgress * Math.PI * 2) * 3;
                 coinScale = 1 + Math.sin(phaseProgress * Math.PI * 4) * 0.1;
