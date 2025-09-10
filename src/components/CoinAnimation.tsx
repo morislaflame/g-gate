@@ -149,11 +149,17 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                 if (progress > enterPhase + spinPhase) phase = 'exit';
                 else if (progress > enterPhase) phase = 'spin';
                 
+                const baseCoinScale = Math.min(width / 358, height / 412);
+                const finalCoinScale = baseCoinScale * animationState.current.coinScale;
+                
                 console.log('Анимация монетки:', { 
                     progress: progress.toFixed(3), 
                     phase, 
                     coinX: animationState.current.coinX.toFixed(1), 
-                    multiplier: currentMultiplier 
+                    multiplier: currentMultiplier,
+                    canvasSize: { width, height },
+                    baseCoinScale: baseCoinScale.toFixed(3),
+                    finalCoinScale: finalCoinScale.toFixed(3)
                 });
             }
             
@@ -206,16 +212,15 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             animationState.current.coinY = coinY;
             animationState.current.coinScale = coinScale;
 
-            // Рисуем монетку только если она еще видна на экране
-            // Масштабируем монетку пропорционально фону
-            const finalCoinScale = scale * animationState.current.coinScale;
+            const baseCoinScale = Math.min(width / 358, height / 412); 
+            const finalCoinScale = baseCoinScale * animationState.current.coinScale;
             const scaledCoinWidth = coinImage.width * finalCoinScale;
             
             if (animationState.current.coinX > -scaledCoinWidth * 2 && animationState.current.coinX < width + scaledCoinWidth) {
                 ctx.save();
                 ctx.translate(
-                    animationState.current.coinX - scaledCoinWidth / 2,
-                    height / 2 + animationState.current.coinY
+                    animationState.current.coinX, 
+                    height / 2 + animationState.current.coinY + 50 
                 );
                 ctx.rotate(animationState.current.coinRotation);
                 ctx.scale(finalCoinScale, finalCoinScale);
