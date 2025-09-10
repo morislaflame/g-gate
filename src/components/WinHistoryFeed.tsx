@@ -8,7 +8,7 @@ const WinHistoryFeed = observer(() => {
     const recentWins = user.getRecentWins(15); 
 
     return (
-        <div className="p-4 w-full">
+        <div className="p-4 w-full absolute bottom-0 left-0">
             
             <div className="flex gap-2 overflow-x-auto hide-scrollbar ios-scroll">
                 {recentWins.map((win) => (

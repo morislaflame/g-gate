@@ -124,14 +124,14 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: B
 
 
             {/* Информация о балансе */}
-            <div className="mt-4 pt-3 border-t border-border-button">
+            {/* <div className="mt-4 pt-3 border-t border-border-button">
                 <div className="flex justify-between items-center text-sm">
                     <span className="text-white opacity-70">Баланс:</span>
                     <span className="text-white font-medium">
                         {userBalance.toLocaleString()}
                     </span>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 });

@@ -10,6 +10,7 @@ interface CoinAnimationProps {
 
 export interface CoinAnimationRef {
     startAnimation: (multiplier: number) => void;
+    setBackgroundHeight: (height: number | null) => void;
 }
 
 const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(({ className = '' }, ref) => {
@@ -17,6 +18,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
     const animationRef = useRef<number>(0);
     const [isAnimating, setIsAnimating] = useState(false);
     const [currentMultiplier, setCurrentMultiplier] = useState<number | null>(null);
+    const [backgroundHeight, setBackgroundHeight] = useState<number | null>(null); // Высота изображения фона (null = автоматически по высоте канваса)
     
     const { getDuration } = useAnimationSpeed();
     
@@ -71,9 +73,10 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         };
     };
 
-    // Экспортируем метод для запуска анимации
+    // Экспортируем методы для управления анимацией
     useImperativeHandle(ref, () => ({
-        startAnimation: startCoinAnimation
+        startAnimation: startCoinAnimation,
+        setBackgroundHeight: setBackgroundHeight
     }));
 
     // Функция отрисовки
@@ -84,23 +87,47 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        const { width, height } = canvas;
+        // Получаем актуальные размеры канваса
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
         
         // Очищаем канвас
         ctx.clearRect(0, 0, width, height);
 
         // Рисуем фон (циклично)
-        // Используем оригинальные размеры изображения
+        // Масштабируем фон по заданной высоте или по высоте канваса, сохраняя пропорции
         const originalBgWidth = backImage.width; // 499
         const originalBgHeight = backImage.height; // 364
         
+        // Используем заданную высоту или высоту канваса
+        const targetHeight = backgroundHeight || height;
+        
+        // Рассчитываем масштаб по целевой высоте изображения
+        const scale = targetHeight / originalBgHeight;
+        const scaledBgWidth = originalBgWidth * scale;
+        const scaledBgHeight = targetHeight;
+        
         // Рассчитываем количество повторений фона по ширине
-        const bgRepeats = Math.ceil(width / originalBgWidth) + 2;
+        const bgRepeats = Math.ceil(width / scaledBgWidth) + 2;
+        
+        // ОТЛАДКА: Выводим информацию о масштабировании
+        console.log('=== ОТЛАДКА МАСШТАБИРОВАНИЯ ФОНА ===');
+        console.log('Размеры канваса:', { width, height });
+        console.log('Заданная высота изображения:', backgroundHeight);
+        console.log('Целевая высота изображения:', targetHeight);
+        console.log('Оригинальные размеры изображения:', { originalBgWidth, originalBgHeight });
+        console.log('Масштаб:', scale.toFixed(3));
+        console.log('Масштабированные размеры:', { 
+            scaledBgWidth: scaledBgWidth.toFixed(1), 
+            scaledBgHeight: scaledBgHeight.toFixed(1) 
+        });
+        console.log('Количество повторений фона:', bgRepeats);
+        console.log('=====================================');
         
         for (let i = -1; i < bgRepeats; i++) {
-            const x = (i * originalBgWidth) - (animationState.current.backgroundOffset % originalBgWidth);
-            // Рисуем изображение в оригинальном размере
-            ctx.drawImage(backImage, x, 0, originalBgWidth, originalBgHeight);
+            const x = (i * scaledBgWidth) - (animationState.current.backgroundOffset % scaledBgWidth);
+            // Рисуем изображение масштабированным по заданной высоте
+            ctx.drawImage(backImage, x, 0, scaledBgWidth, scaledBgHeight);
         }
 
         // Анимация монетки
@@ -180,14 +207,18 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             animationState.current.coinScale = coinScale;
 
             // Рисуем монетку только если она еще видна на экране
-            if (animationState.current.coinX > -coinImage.width * 2 && animationState.current.coinX < width + coinImage.width) {
+            // Масштабируем монетку пропорционально фону
+            const finalCoinScale = scale * animationState.current.coinScale;
+            const scaledCoinWidth = coinImage.width * finalCoinScale;
+            
+            if (animationState.current.coinX > -scaledCoinWidth * 2 && animationState.current.coinX < width + scaledCoinWidth) {
                 ctx.save();
                 ctx.translate(
-                    animationState.current.coinX - coinImage.width / 2,
+                    animationState.current.coinX - scaledCoinWidth / 2,
                     height / 2 + animationState.current.coinY
                 );
                 ctx.rotate(animationState.current.coinRotation);
-                ctx.scale(animationState.current.coinScale, animationState.current.coinScale);
+                ctx.scale(finalCoinScale, finalCoinScale);
                 ctx.drawImage(
                     coinImage,
                     -coinImage.width / 2,
@@ -199,7 +230,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             }
 
             // Проверяем, закончилась ли анимация - монетка полностью уехала за правый край
-            if (animationState.current.coinX > width + coinImage.width || progress >= 1) {
+            if (animationState.current.coinX > width + scaledCoinWidth || progress >= 1) {
                 console.log('Анимация завершена - монетка уехала за край или достигнут конец прогресса');
                 animationState.current.isCoinVisible = false;
                 animationState.current.isBackgroundMoving = false; // Останавливаем движение фона
@@ -229,7 +260,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         if (animationState.current.isBackgroundMoving) {
             animationState.current.backgroundOffset += animationState.current.backgroundSpeed;
         }
-    }, [backImage, coinImage, currentMultiplier, getDuration]);
+    }, [backImage, coinImage, currentMultiplier, getDuration, backgroundHeight]);
 
     // Основной цикл анимации
     useEffect(() => {
@@ -247,22 +278,32 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         };
     }, [draw]);
 
+    // Пропорции канваса (соотношение сторон)
+    const CANVAS_ASPECT_RATIO = 358 / 412; // ≈ 0.869
+
     // Обработка изменения размера окна
     useEffect(() => {
         const handleResize = () => {
             const canvas = canvasRef.current;
             if (!canvas) return;
 
-            const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             
-            // Устанавливаем размер канваса в CSS пикселях
-            canvas.style.width = rect.width + 'px';
-            canvas.style.height = rect.height + 'px';
+            // Получаем размеры родительского контейнера
+            const container = canvas.parentElement;
+            if (!container) return;
+            
+            const containerWidth = container.clientWidth;
+            const canvasWidth = containerWidth;
+            const canvasHeight = canvasWidth / CANVAS_ASPECT_RATIO;
+            
+            // Устанавливаем размеры канваса в CSS пикселях
+            canvas.style.width = canvasWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
             
             // Устанавливаем размер буфера канваса в физических пикселях
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
+            canvas.width = canvasWidth * dpr;
+            canvas.height = canvasHeight * dpr;
             
             // Масштабируем контекст для поддержки Retina дисплеев
             const ctx = canvas.getContext('2d');
@@ -277,10 +318,10 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         return () => {
             window.removeEventListener('resize', handleResize);
         };
-    }, []);
+    }, [CANVAS_ASPECT_RATIO]);
 
     return (
-        <div className={`relative w-full flex-1 ${className}`}>
+        <div className={`relative w-full ${className}`}>
             <canvas
                 ref={canvasRef}
                 className="w-full h-full"
