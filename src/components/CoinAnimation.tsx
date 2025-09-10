@@ -217,6 +217,30 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             const scaledCoinWidth = coinImage.width * finalCoinScale;
             
             if (animationState.current.coinX > -scaledCoinWidth * 2 && animationState.current.coinX < width + scaledCoinWidth) {
+                // Рисуем тень монетки (отбрасывается на горизонтальную поверхность)
+                ctx.save();
+                ctx.translate(
+                    animationState.current.coinX - 35, // Смещение тени влево
+                    height / 2 + animationState.current.coinY + 95 + 8 // Смещение тени вниз
+                );
+                // Применяем те же эффекты масштабирования и покачивания, что и у монетки
+                ctx.scale(finalCoinScale, finalCoinScale);
+                ctx.globalAlpha = 0.25; // Прозрачность тени
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.74)'; // Цвет тени
+                ctx.beginPath();
+                // Тень тоже покачивается и масштабируется вместе с монеткой
+                const shadowScaleX = 1.1 * animationState.current.coinScale; // Горизонтальный масштаб тени
+                const shadowScaleY = 0.1 * animationState.current.coinScale; // Вертикальный масштаб тени
+                ctx.ellipse(
+                    0, 0, 
+                    coinImage.width / 2 * shadowScaleX, // Тень масштабируется вместе с монеткой
+                    coinImage.height / 2 * shadowScaleY, // Тень масштабируется вместе с монеткой
+                    0, 0, 2 * Math.PI
+                );
+                ctx.fill();
+                ctx.restore();
+
+                // Рисуем саму монетку
                 ctx.save();
                 ctx.translate(
                     animationState.current.coinX, 
