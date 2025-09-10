@@ -4,7 +4,7 @@ import CoinAnimation, { type CoinAnimationRef } from "@/components/CoinAnimation
 import Counter, { type CounterRef } from "@/components/ui/Counter";
 import BalanceChange, { type BalanceChangeRef } from "@/components/BalanceChange";
 // import SpeedToggle from "@/components/ui/SpeedToggle";
-import { AnimationSpeedProvider } from "@/contexts/AnimationSpeedContext";
+import { AnimationSpeedProvider } from "@/contexts/AnimationSpeedProvider";
 import { Context, type IStoreContext } from "@/store/StoreProvider";
 import { useContext, useRef, useState } from "react";
 

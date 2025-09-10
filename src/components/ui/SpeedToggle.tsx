@@ -1,4 +1,4 @@
-import { useAnimationSpeed } from '@/contexts/AnimationSpeedContext';
+import { useAnimationSpeed } from '@/hooks/useAnimationSpeed';
 
 interface SpeedToggleProps {
     className?: string;

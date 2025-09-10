@@ -1,14 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-
-export type AnimationSpeed = 'slow' | 'fast';
-
-interface AnimationSpeedContextType {
-    speed: AnimationSpeed;
-    setSpeed: (speed: AnimationSpeed) => void;
-    getDuration: (targetValue: number) => number;
-}
-
-const AnimationSpeedContext = createContext<AnimationSpeedContextType | undefined>(undefined);
+import { useState, type ReactNode } from 'react';
+import { AnimationSpeedContext, type AnimationSpeed } from './AnimationSpeedContext';
 
 interface AnimationSpeedProviderProps {
     children: ReactNode;
@@ -27,12 +18,4 @@ export const AnimationSpeedProvider = ({ children }: AnimationSpeedProviderProps
             {children}
         </AnimationSpeedContext.Provider>
     );
-};
-
-export const useAnimationSpeed = () => {
-    const context = useContext(AnimationSpeedContext);
-    if (context === undefined) {
-        throw new Error('useAnimationSpeed must be used within an AnimationSpeedProvider');
-    }
-    return context;
 };

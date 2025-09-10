@@ -1,6 +1,6 @@
 import { useState, useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useAnimationSpeed } from '@/contexts/AnimationSpeedContext';
+import { useAnimationSpeed } from '@/hooks/useAnimationSpeed';
 import GGCoinImage from '@/assets/GG-coin.png';
 
 interface BalanceChangeProps {

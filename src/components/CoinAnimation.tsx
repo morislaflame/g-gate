@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useAnimationSpeed } from '@/contexts/AnimationSpeedContext';
+import { useAnimationSpeed } from '@/hooks/useAnimationSpeed';
 import { useHapticFeedback } from '@/utils/useHapticFeedback';
 import BackImage from '@/assets/Back.png';
 import CoinImage from '@/assets/Coin.png';

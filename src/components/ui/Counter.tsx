@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { useAnimationSpeed } from '@/contexts/AnimationSpeedContext';
+import { useAnimationSpeed } from '@/hooks/useAnimationSpeed';
 
 interface CounterProps {
     className?: string;
