@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 type HapticImpactStyle = 'light' | 'medium' | 'heavy' | 'soft';
+type HapticNotificationStyle = 'success' | 'warning' | 'error' | 'none';
 
 export const useHapticFeedback = () => {
 
@@ -9,8 +10,15 @@ export const useHapticFeedback = () => {
       window.Telegram.WebApp.HapticFeedback.impactOccurred(style);
     }
   }, []);
+
+  const hapticNotification = useCallback((style: HapticNotificationStyle = 'none') => {
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred(style);
+    }
+  }, []);
   
   return {
     hapticImpact,
+    hapticNotification,
   };
 };

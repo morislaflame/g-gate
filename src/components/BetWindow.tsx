@@ -17,7 +17,7 @@ interface BetWindowProps {
 const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: BetWindowProps) => {
     const { user } = useContext(Context) as IStoreContext;
     const [betAmount, setBetAmount] = useState<number>(0);
-    const { hapticImpact } = useHapticFeedback();
+    const { hapticImpact, hapticNotification } = useHapticFeedback();
 
     const handleAmountChange = (newAmount: number) => {
         // Проверяем, что сумма не превышает баланс и не отрицательная
@@ -44,7 +44,7 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced }: B
     };
 
     const handleMakeBet = () => {
-        hapticImpact('soft');
+        hapticNotification('success');
         if (betAmount > 0 && user) {
             // Создаем новый выигрыш
             const newWin = user.addWinToHistory(betAmount);

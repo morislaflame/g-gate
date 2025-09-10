@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useAnimationSpeed } from '@/contexts/AnimationSpeedContext';
+import { useHapticFeedback } from '@/utils/useHapticFeedback';
 import BackImage from '@/assets/Back.png';
 import CoinImage from '@/assets/Coin.png';
 
@@ -21,6 +22,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
     const [backgroundHeight, setBackgroundHeight] = useState<number | null>(null); // Высота изображения фона (null = автоматически по высоте канваса)
     
     const { getDuration } = useAnimationSpeed();
+    const { hapticImpact, hapticNotification } = useHapticFeedback();
     
     // Состояние анимации
     const animationState = useRef({
@@ -33,6 +35,8 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         isCoinVisible: false,
         isBackgroundMoving: false, // Фон движется только во время анимации монетки
         backgroundSpeed: 0.8, // Скорость движения фона (меньше чем у монетки)
+        hasReachedCenter: false, // Флаг для haptic feedback при достижении центра
+        lastHapticTime: 0, // Время последней вибрации в средней фазе
     });
 
     // Загружаем изображения
@@ -56,6 +60,10 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         
         console.log('Запуск анимации монетки с множителем:', multiplier);
         console.log('Фон начинает двигаться');
+        
+        // Haptic feedback при запуске анимации
+        hapticImpact('medium');
+        
         setCurrentMultiplier(multiplier);
         setIsAnimating(true);
         
@@ -70,6 +78,8 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             isCoinVisible: true,
             isBackgroundMoving: true, // Запускаем движение фона
             backgroundSpeed: 0.7, // Скорость фона меньше чем у монетки
+            hasReachedCenter: false, // Сбрасываем флаг достижения центра
+            lastHapticTime: 0, // Сбрасываем время последней вибрации
         };
     };
 
@@ -110,19 +120,6 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         // Рассчитываем количество повторений фона по ширине
         const bgRepeats = Math.ceil(width / scaledBgWidth) + 2;
         
-        // ОТЛАДКА: Выводим информацию о масштабировании
-        console.log('=== ОТЛАДКА МАСШТАБИРОВАНИЯ ФОНА ===');
-        console.log('Размеры канваса:', { width, height });
-        console.log('Заданная высота изображения:', backgroundHeight);
-        console.log('Целевая высота изображения:', targetHeight);
-        console.log('Оригинальные размеры изображения:', { originalBgWidth, originalBgHeight });
-        console.log('Масштаб:', scale.toFixed(3));
-        console.log('Масштабированные размеры:', { 
-            scaledBgWidth: scaledBgWidth.toFixed(1), 
-            scaledBgHeight: scaledBgHeight.toFixed(1) 
-        });
-        console.log('Количество повторений фона:', bgRepeats);
-        console.log('=====================================');
         
         for (let i = -1; i < bgRepeats; i++) {
             const x = (i * scaledBgWidth) - (animationState.current.backgroundOffset % scaledBgWidth);
@@ -187,6 +184,19 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                 coinY = Math.sin(phaseProgress * Math.PI * 2) * 3;
                 coinScale = 1 + Math.sin(phaseProgress * Math.PI * 4) * 0.1;
                 
+                // Периодические вибрации каждые 0.2 секунды в начальной фазе
+                const currentTime = elapsedSeconds;
+                if (currentTime - animationState.current.lastHapticTime >= 0.2) {
+                    hapticImpact('light');
+                    animationState.current.lastHapticTime = currentTime;
+                }
+                
+                // Haptic feedback когда монетка достигает центра
+                // if (phaseProgress > 0.9 && !animationState.current.hasReachedCenter) {
+                //     hapticImpact('light');
+                //     animationState.current.hasReachedCenter = true;
+                // }
+                
             } else if (progress <= enterPhase + spinPhase) {
                 // Средняя фаза: монетка в центре с покачиванием вперед-назад
                 const spinElapsedTime = elapsedSeconds - (enterPhase * totalDuration / 1000);
@@ -195,6 +205,13 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                 coinRotation = baseRotation;
                 coinY = Math.sin(spinElapsedTime * 8) * 2; // Вертикальное покачивание
                 coinScale = 1 + Math.sin(spinElapsedTime * 16) * 0.01; // Масштабирование
+                
+                // Периодические вибрации каждые 0.5 секунды в средней фазе
+                const currentTime = elapsedSeconds;
+                if (currentTime - animationState.current.lastHapticTime >= 0.2) {
+                    hapticImpact('light');
+                    animationState.current.lastHapticTime = currentTime;
+                }
                 
             } else {
                 // Фаза 3: Резкий уезд из текущего положения с постоянной скоростью
@@ -271,6 +288,10 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             // Проверяем, закончилась ли анимация - монетка полностью уехала за правый край
             if (animationState.current.coinX > width + scaledCoinWidth || progress >= 1) {
                 console.log('Анимация завершена - монетка уехала за край или достигнут конец прогресса');
+                
+                // Haptic feedback при завершении анимации
+                hapticNotification('success');
+                
                 animationState.current.isCoinVisible = false;
                 animationState.current.isBackgroundMoving = false; // Останавливаем движение фона
                 setIsAnimating(false);
@@ -288,6 +309,10 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             if (animationState.current.animationProgress >= 1) {
                 animationState.current.animationProgress = 1;
                 // Принудительно завершаем анимацию, если прогресс достиг 100%
+                
+                // Haptic feedback при принудительном завершении анимации
+                hapticNotification('success');
+                
                 animationState.current.isCoinVisible = false;
                 animationState.current.isBackgroundMoving = false; // Останавливаем движение фона
                 setIsAnimating(false);
@@ -299,7 +324,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         if (animationState.current.isBackgroundMoving) {
             animationState.current.backgroundOffset += animationState.current.backgroundSpeed;
         }
-    }, [backImage, coinImage, currentMultiplier, getDuration, backgroundHeight]);
+    }, [backImage, coinImage, currentMultiplier, getDuration, backgroundHeight, hapticImpact, hapticNotification]);
 
     // Основной цикл анимации
     useEffect(() => {
