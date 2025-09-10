@@ -28,7 +28,6 @@ const BalanceChange = observer(forwardRef<BalanceChangeRef, BalanceChangeProps>(
     const { getDuration } = useAnimationSpeed();
 
     const startAnimation = (betAmount: number, finalAmount: number) => {
-        console.log('BalanceChange: Запуск анимации', { betAmount, finalAmount, multiplier: finalAmount / betAmount });
         
         setInitialBet(betAmount);
         setFinalAmount(finalAmount);
@@ -60,22 +59,10 @@ const BalanceChange = observer(forwardRef<BalanceChangeRef, BalanceChangeProps>(
         const currentAmount = Math.round(animationState.current.finalAmount * easeOut);
         setDisplayAmount(currentAmount);
         
-        // Отладочная информация для первых кадров
-        if (progress < 0.1 || progress > 0.9) {
-            console.log('BalanceChange анимация:', { 
-                progress: progress.toFixed(3), 
-                easeOut: easeOut.toFixed(3), 
-                currentAmount, 
-                finalAmount: animationState.current.finalAmount,
-                elapsed: elapsed.toFixed(0),
-                duration: duration.toFixed(0)
-            });
-        }
         
         if (progress < 1) {
             animationRef.current = requestAnimationFrame(animate);
         } else {
-            console.log('BalanceChange: Анимация завершена, финальная сумма:', animationState.current.finalAmount);
             setIsAnimating(false);
             setDisplayAmount(animationState.current.finalAmount);
         }

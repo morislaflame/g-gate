@@ -23,8 +23,8 @@ const App = observer(() => {
   useEffect(() => {
     if (isAvailable) {
       disableVerticalSwipes();
-      setHeaderColor('#191919');
-      setBackgroundColor('#191919');
+      setHeaderColor('#000000');
+      setBackgroundColor('#000000');
       lockOrientation();
 
       ready();

@@ -47,16 +47,15 @@ const BetWindow = observer(({ userBalance = 10000, onBetChange, onBetPlaced, isA
     const handleMakeBet = () => {
         hapticNotification('success');
         if (betAmount > 0 && user) {
-            // Создаем новый выигрыш
-            const newWin = user.addWinToHistory(betAmount);
+            // Генерируем временный множитель для анимаций
+            const tempMultiplier = user.generateTempMultiplier();
             
-            // Запускаем анимацию монетки с мультипликатором
-            onBetPlaced?.(newWin.multiplier, betAmount);
+            // Запускаем анимации с временным множителем
+            onBetPlaced?.(tempMultiplier, betAmount);
             
             // Сбрасываем ставку после успешного размещения
             setBetAmount(0);
             
-            console.log('Новая ставка размещена:', newWin);
         }
     };
 

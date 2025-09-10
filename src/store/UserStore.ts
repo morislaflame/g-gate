@@ -37,10 +37,16 @@ export default class UserStore {
         this._winHistory = mockHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     }
 
-    // Метод для добавления нового выигрыша
-    addWinToHistory(betAmount: number) {
+    // Метод для генерации временного множителя (без добавления в историю)
+    generateTempMultiplier(): number {
         const multiplier = generateRandomMultiplier();
+        return multiplier;
+    }
+
+    // Метод для добавления нового выигрыша в историю
+    addWinToHistory(betAmount: number, multiplier: number) {
         const newWin = createWinHistoryEntry(betAmount, multiplier);
+        
         
         runInAction(() => {
             // Добавляем в начало массива
@@ -60,7 +66,8 @@ export default class UserStore {
 
     // Метод для получения последних N выигрышей
     getRecentWins(count: number = 10): WinHistory[] {
-        return this._winHistory.slice(0, count);
+        const result = this._winHistory.slice(0, count);
+        return result;
     }
 
     setIsAuth(bool: boolean) {

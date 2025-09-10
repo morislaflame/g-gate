@@ -14,10 +14,12 @@ const MainPage = () => {
     const counterRef = useRef<CounterRef>(null);
     const balanceChangeRef = useRef<BalanceChangeRef>(null);
     const [isAnimating, setIsAnimating] = useState(false);
+    const pendingBetsRef = useRef<{multiplier: number, betAmount: number}[]>([]);
 
     const handleBetPlaced = (multiplier: number, betAmount: number) => {
-        console.log('MainPage: handleBetPlaced вызвана с множителем:', multiplier, 'ставка:', betAmount);
-        console.log('MainPage: coinAnimationRef.current:', coinAnimationRef.current);
+        
+        // Сохраняем данные ставки для последующего добавления в историю
+        pendingBetsRef.current.push({ multiplier, betAmount });
         
         // Устанавливаем состояние анимации
         setIsAnimating(true);
@@ -30,7 +32,6 @@ const MainPage = () => {
         
         // Запускаем анимацию изменения баланса
         const finalAmount = Math.round(betAmount * multiplier);
-        console.log('MainPage: Расчет финальной суммы', { betAmount, multiplier, finalAmount });
         
         // Небольшая задержка чтобы убедиться что компонент готов
         setTimeout(() => {
@@ -39,8 +40,25 @@ const MainPage = () => {
         
         // Проверяем завершение анимации через интервал
         const checkAnimationComplete = () => {
-            if (coinAnimationRef.current && !coinAnimationRef.current.isAnimating()) {
+            const coinAnimating = coinAnimationRef.current?.isAnimating() || false;
+            const counterAnimating = counterRef.current?.isAnimating() || false;
+            
+            
+            if (!coinAnimating && !counterAnimating) {
                 setIsAnimating(false);
+                
+                // Добавляем все ожидающие выигрыши в историю после завершения анимации Counter
+                if (pendingBetsRef.current.length > 0) {
+                    
+                    // Добавляем все ожидающие ставки в историю
+                    pendingBetsRef.current.forEach((bet, index) => {
+                        console.log(`MainPage: Adding bet ${index + 1} to history:`, bet);
+                        user.addWinToHistory(bet.betAmount, bet.multiplier);
+                    });
+                    
+                    // Очищаем список ожидающих ставок
+                    pendingBetsRef.current = [];
+                }
             } else {
                 setTimeout(checkAnimationComplete, 100); // Проверяем каждые 100мс
             }

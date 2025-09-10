@@ -7,6 +7,7 @@ interface CounterProps {
 
 export interface CounterRef {
     startAnimation: (targetMultiplier: number) => void;
+    isAnimating: () => boolean;
 }
 
 const Counter = forwardRef<CounterRef, CounterProps>(({ className = '' }, ref) => {
@@ -29,9 +30,10 @@ const Counter = forwardRef<CounterRef, CounterProps>(({ className = '' }, ref) =
     };
 
 
-    // Экспортируем метод для запуска анимации
+    // Экспортируем методы для управления анимацией
     useImperativeHandle(ref, () => ({
-        startAnimation: startCounterAnimation
+        startAnimation: startCounterAnimation,
+        isAnimating: () => isAnimating
     }));
 
     // Анимация счетчика
