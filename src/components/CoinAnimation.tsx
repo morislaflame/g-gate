@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallba
 import { observer } from 'mobx-react-lite';
 import { useAnimationSpeed } from '@/hooks/useAnimationSpeed';
 import { useHapticFeedback } from '@/utils/useHapticFeedback';
-import BackImage from '@/assets/Back.svg';
+import BackImage from '@/assets/Back2.svg';
 import CoinImage from '@/assets/Coin.svg';
 
 interface CoinAnimationProps {
@@ -121,9 +121,12 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
         // Рассчитываем количество повторений фона по ширине
         const bgRepeats = Math.ceil(width / scaledBgWidth) + 2;
         
+        // Исправляем зазор между дублированными фонами с перекрытием
+        const offset = animationState.current.backgroundOffset % scaledBgWidth;
+        const normalizedOffset = Math.floor(offset);
         
         for (let i = -1; i < bgRepeats; i++) {
-            const x = (i * scaledBgWidth) - (animationState.current.backgroundOffset % scaledBgWidth);
+            const x = (i * scaledBgWidth) - normalizedOffset;
             // Рисуем изображение масштабированным по заданной высоте
             ctx.drawImage(backImage, x, 0, scaledBgWidth, scaledBgHeight);
         }
