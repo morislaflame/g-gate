@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallba
 import { observer } from 'mobx-react-lite';
 import { useAnimationSpeed } from '@/hooks/useAnimationSpeed';
 import { useHapticFeedback } from '@/utils/useHapticFeedback';
-import BackImage from '@/assets/Back.png';
-import CoinImage from '@/assets/Coin.png';
+import BackImage from '@/assets/Back.svg';
+import CoinImage from '@/assets/Coin.svg';
 
 interface CoinAnimationProps {
     className?: string;
@@ -245,11 +245,17 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             const scaledCoinWidth = coinImage.width * finalCoinScale;
             
             if (animationState.current.coinX > -scaledCoinWidth * 2 && animationState.current.coinX < width + scaledCoinWidth) {
+                // Рассчитываем относительные позиции на основе высоты канваса
+                const shadowOffsetX = height * 0.085; // ~35px при высоте 412px
+                const shadowOffsetY = height * 0.2; // ~75px при высоте 412px
+                const shadowDepth = height * 0.03; // ~8px при высоте 412px
+                const coinOffsetY = height * 0.1; // ~40px при высоте 412px
+                
                 // Рисуем тень монетки (отбрасывается на горизонтальную поверхность)
                 ctx.save();
                 ctx.translate(
-                    animationState.current.coinX - 35, // Смещение тени влево
-                    height / 2 + animationState.current.coinY + 95 + 8 // Смещение тени вниз
+                    animationState.current.coinX - shadowOffsetX, // Смещение тени влево
+                    height / 2 + animationState.current.coinY + shadowOffsetY + shadowDepth // Смещение тени вниз
                 );
                 // Применяем те же эффекты масштабирования и покачивания, что и у монетки
                 ctx.scale(finalCoinScale, finalCoinScale);
@@ -272,7 +278,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
                 ctx.save();
                 ctx.translate(
                     animationState.current.coinX, 
-                    height / 2 + animationState.current.coinY + 50 
+                    height / 2 + animationState.current.coinY + coinOffsetY 
                 );
                 ctx.rotate(animationState.current.coinRotation);
                 ctx.scale(finalCoinScale, finalCoinScale);
@@ -345,7 +351,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
     // Пропорции канваса (соотношение сторон)
     const CANVAS_ASPECT_RATIO = 358 / 412; // ≈ 0.869
 
-    // Обработка изменения размера окна
+    // Обработка изменения размера окна - адаптивный по высоте с ограничением aspect ratio
     useEffect(() => {
         const handleResize = () => {
             const canvas = canvasRef.current;
@@ -358,8 +364,22 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
             if (!container) return;
             
             const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Рассчитываем размеры канваса
             const canvasWidth = containerWidth;
-            const canvasHeight = canvasWidth / CANVAS_ASPECT_RATIO;
+            let canvasHeight = containerHeight;
+            
+            // Ограничиваем высоту максимально возможной по aspect ratio
+            const maxHeightByAspectRatio = canvasWidth / CANVAS_ASPECT_RATIO;
+            if (canvasHeight > maxHeightByAspectRatio) {
+                canvasHeight = maxHeightByAspectRatio;
+            }
+            
+            // Если контейнер не имеет высоты, рассчитываем по соотношению сторон
+            if (containerHeight <= 0) {
+                canvasHeight = canvasWidth / CANVAS_ASPECT_RATIO;
+            }
             
             // Устанавливаем размеры канваса в CSS пикселях
             canvas.style.width = canvasWidth + 'px';
@@ -385,7 +405,7 @@ const CoinAnimation = observer(forwardRef<CoinAnimationRef, CoinAnimationProps>(
     }, [CANVAS_ASPECT_RATIO]);
 
     return (
-        <div className={`relative w-full ${className}`}>
+        <div className={`relative w-full h-full ${className}`}>
             <canvas
                 ref={canvasRef}
                 className="w-full h-full overflow-hidden"

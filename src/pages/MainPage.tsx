@@ -70,22 +70,42 @@ const MainPage = () => {
 
     return (
         <AnimationSpeedProvider>
-            <div className="flex flex-col justify-end h-full w-full p-5">
-                <div className="flex flex-col relative rounded-xl">
-                    <CoinAnimation ref={coinAnimationRef} />
-                    <div className="flex items-center justify-between gap-2 w-full absolute top-0 left-0 p-4">
+            <div className="flex flex-col h-full w-full p-5">
+                {/* Основной контент - занимает доступное пространство */}
+                <div className="flex-1 flex flex-col min-h-0">
+                    <div className="flex-1 flex flex-col relative rounded-xl min-h-0 justify-end">
+                        {/* Контейнер канваса - адаптивный по высоте с ограничением aspect ratio */}
+                        <div 
+                            className="flex-1 min-h-0 relative"
+                            style={{
+                                maxHeight: 'calc(100vw * 358 / 358)' // Ограничение по aspect ratio (358/412)
+                            }}
+                        >
+                            <CoinAnimation ref={coinAnimationRef} />
+                            <div className="flex items-center justify-between gap-2 w-full absolute top-0 left-0 p-4 pointer-events-none">
+                                <BalanceChange ref={balanceChangeRef} />
+                                <Counter ref={counterRef} />
+                            </div>
+                        </div>
                         
-                        <BalanceChange ref={balanceChangeRef} />
-                        <Counter ref={counterRef}  />
+                        {/* Абсолютно позиционированные элементы поверх канваса */}
+                        
+                        
+                        {/* Лента истории - фиксированная высота */}
+                        <div className="flex-shrink-0">
+                            <WinHistoryFeed />
+                        </div>
                     </div>
-                    <WinHistoryFeed />
                 </div>
-                {/* <SpeedToggle className="absolute bottom-0 left-0" /> */}
-                <BetWindow 
-                    userBalance={user.userBalance} 
-                    onBetPlaced={handleBetPlaced}
-                    isAnimating={isAnimating}
-                />
+                
+                {/* Окно ставок - фиксированное внизу */}
+                <div className="flex-shrink-0">
+                    <BetWindow 
+                        userBalance={user.userBalance} 
+                        onBetPlaced={handleBetPlaced}
+                        isAnimating={isAnimating}
+                    />
+                </div>
             </div>
         </AnimationSpeedProvider>
     )
