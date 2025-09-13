@@ -47,7 +47,6 @@ export default class UserStore {
     addWinToHistory(betAmount: number, multiplier: number) {
         const newWin = createWinHistoryEntry(betAmount, multiplier);
         
-        
         runInAction(() => {
             // Добавляем в начало массива
             this._winHistory.unshift(newWin);
@@ -58,6 +57,10 @@ export default class UserStore {
                 this._user.balance -= betAmount;
                 // Затем добавляем выигрыш
                 this._user.balance += newWin.winAmount;
+                
+                // Синхронизируем изменение баланса с TgTaps UI
+                const balanceChange = newWin.winAmount - betAmount; // Чистый выигрыш/проигрыш
+                this.syncBalanceWithTgTaps(balanceChange);
             }
         });
         
@@ -132,5 +135,19 @@ export default class UserStore {
     // Добавляем моковый баланс для демонстрации
     get userBalance() {
         return this._user?.balance || 10000; // Моковый баланс
+    }
+
+    // Функция для синхронизации баланса с TgTaps UI
+    syncBalanceWithTgTaps(balanceChange: number) {
+        // Отправляем изменение баланса в TgTaps UI
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage(
+                {
+                    type: 'INCREASE_POINTS',
+                    payload: balanceChange,
+                },
+                '*',
+            );
+        }
     }
 }

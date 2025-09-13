@@ -2,6 +2,7 @@ import { lazy, Suspense, useContext, useEffect, useState } from 'react'
 import { BrowserRouter } from "react-router-dom";
 import { observer } from 'mobx-react-lite';
 import { useTelegramApp } from '@/utils/useTelegramApp';
+import { useTgTaps } from '@/hooks/useTgTaps';
 import { Context, type IStoreContext } from '@/store/StoreProvider';
 import LoadingIndicator from '@/components/LoadingIndicator';
 
@@ -18,6 +19,9 @@ const App = observer(() => {
     setHeaderColor,
     setBackgroundColor
   } = useTelegramApp();
+  
+  // TgTaps интеграция
+  const { telegramData, isLoading: tgtapsLoading, error: tgtapsError } = useTgTaps();
 
 
   useEffect(() => {
@@ -36,8 +40,22 @@ const App = observer(() => {
 
   useEffect(() => {
     const authenticate = async () => {
+      // Проверяем, есть ли данные от TgTaps
+      if (telegramData?.initData) {
+        console.log("TgTaps Init Data:", telegramData.initData);
+        try {
+          // Выполняем аутентификацию через TgTaps
+          await user.telegramLogin(telegramData.initData);
+        } catch (error) {
+          console.error("TgTaps authentication error:", error);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Если TgTaps не отвечает, пробуем обычную Telegram аутентификацию
       const initData = tg?.initData;
-      console.log("Init Data:", initData); // Для отладки
+      console.log("Telegram Init Data:", initData);
 
       if (initData) {
         try {
@@ -50,11 +68,20 @@ const App = observer(() => {
       setLoading(false);
     };
 
-    authenticate();
-  }, [user]);
+    // Ждем завершения загрузки TgTaps или таймаута
+    if (!tgtapsLoading) {
+      authenticate();
+    }
+  }, [user, telegramData, tgtapsLoading, tg?.initData]);
 
-  if (loading) {
+  if (loading || tgtapsLoading) {
     return <LoadingIndicator />;
+  }
+
+  // Показываем ошибку TgTaps, если она есть
+  if (tgtapsError) {
+    console.warn("TgTaps error:", tgtapsError);
+    // Продолжаем работу с обычной Telegram аутентификацией
   }
 
 
