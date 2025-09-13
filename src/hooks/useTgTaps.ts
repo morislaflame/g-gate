@@ -28,11 +28,15 @@ export const useTgTaps = () => {
   const [telegramData, setTelegramData] = useState<TgTapsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [requestSent, setRequestSent] = useState(false);
 
   const requestTelegramData = useCallback(() => {
-    // Запрашиваем данные у TgTaps
-    window.parent.postMessage({ type: "REQUEST_TELEGRAM_DATA" }, "*");
-  }, []);
+    // Запрашиваем данные у TgTaps только один раз
+    if (!requestSent) {
+      window.parent.postMessage({ type: "REQUEST_TELEGRAM_DATA" }, "*");
+      setRequestSent(true);
+    }
+  }, [requestSent]);
 
   const increasePoints = useCallback((points: number) => {
     // Увеличиваем/уменьшаем очки в UI TgTaps
@@ -60,8 +64,11 @@ export const useTgTaps = () => {
     // Добавляем слушатель
     window.addEventListener("message", onTelegramDataReceived);
     
-    // Запрашиваем у TgTaps отправить данные нашему слушателю
-    requestTelegramData();
+    // Запрашиваем у TgTaps отправить данные нашему слушателю только один раз
+    if (!requestSent) {
+      window.parent.postMessage({ type: "REQUEST_TELEGRAM_DATA" }, "*");
+      setRequestSent(true);
+    }
 
     // Таймаут для обработки случая, когда TgTaps не отвечает
     const timeout = setTimeout(() => {
@@ -75,7 +82,7 @@ export const useTgTaps = () => {
       window.removeEventListener("message", onTelegramDataReceived);
       clearTimeout(timeout);
     };
-  }, [requestTelegramData, telegramData]);
+  }, [requestSent, telegramData]);
 
   return {
     telegramData,
