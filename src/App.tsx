@@ -11,6 +11,7 @@ const AppRouter = lazy(() => import("@/router/AppRouter"));
 const App = observer(() => {
   const { user } = useContext(Context) as IStoreContext;
   const [loading, setLoading] = useState(true);
+  const [authAttempted, setAuthAttempted] = useState(false);
   const {
     disableVerticalSwipes,
     lockOrientation,
@@ -40,9 +41,19 @@ const App = observer(() => {
 
   useEffect(() => {
     const authenticate = async () => {
+      // Предотвращаем повторные попытки авторизации
+      if (authAttempted || user.authAttempted) {
+        setLoading(false);
+        return;
+      }
+
+      setAuthAttempted(true);
+
       // Проверяем, есть ли данные от TgTaps
       if (telegramData?.initData) {
         console.log("TgTaps Init Data:", telegramData.initData);
+        console.log("TgTaps Init Data type:", typeof telegramData.initData);
+        console.log("TgTaps Init Data length:", telegramData.initData.length);
         try {
           // Выполняем аутентификацию через TgTaps
           await user.telegramLogin(telegramData.initData);
@@ -69,10 +80,12 @@ const App = observer(() => {
     };
 
     // Ждем завершения загрузки TgTaps или таймаута
-    if (!tgtapsLoading) {
+    if (!tgtapsLoading && !authAttempted && !user.authAttempted) {
       authenticate();
+    } else if (user.authAttempted) {
+      setLoading(false);
     }
-  }, [user, telegramData, tgtapsLoading, tg?.initData]);
+  }, [telegramData, tgtapsLoading, tg?.initData, authAttempted, user]);
 
   if (loading || tgtapsLoading) {
     return <LoadingIndicator />;

@@ -12,6 +12,7 @@ export default class UserStore {
     isServerError = false;
     serverErrorMessage = '';
     _winHistory: WinHistory[] = []; // История выигрышей
+    _authAttempted = false; // Флаг для предотвращения повторных попыток авторизации
 
     constructor() {
         makeAutoObservable(this);
@@ -99,6 +100,14 @@ export default class UserStore {
     }
 
     async telegramLogin(init_data: string) {
+        // Предотвращаем повторные попытки авторизации
+        if (this._authAttempted) {
+            console.log("Authentication already attempted, skipping...");
+            return;
+        }
+
+        this._authAttempted = true;
+
         try {
             const data = await telegramAuth(init_data);
             runInAction(() => {
@@ -108,7 +117,9 @@ export default class UserStore {
             });
         } catch (error) {
             console.error("Error during Telegram authentication:", error);
-            this.setServerError(true, 'Server is not responding. Please try again later.');
+            runInAction(() => {
+                this.setServerError(true, 'Server is not responding. Please try again later.');
+            });
         }
     }
 
@@ -135,6 +146,10 @@ export default class UserStore {
     // Добавляем моковый баланс для демонстрации
     get userBalance() {
         return this._user?.balance || 10000; // Моковый баланс
+    }
+
+    get authAttempted() {
+        return this._authAttempted;
     }
 
     // Функция для синхронизации баланса с TgTaps UI
