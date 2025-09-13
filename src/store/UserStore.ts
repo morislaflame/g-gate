@@ -1,5 +1,5 @@
 import {makeAutoObservable, runInAction } from "mobx";
-import { fetchMyInfo, telegramAuth, check } from "@/http/userAPI";
+import { telegramAuth } from "@/http/userAPI";
 import { type UserInfo, type WinHistory } from "@/types/types";
 import { generateRandomMultiplier, createWinHistoryEntry } from "@/utils/mutiplierUtils";
 
@@ -95,18 +95,9 @@ export default class UserStore {
         this.serverErrorMessage = message;
     }
 
-    async logout() {
+    async telegramLogin(init_data: string) {
         try {
-            this.setIsAuth(false);
-            this.setUser(null);
-        } catch (error) {
-            console.error("Error during logout:", error);
-        }
-    }
-
-    async telegramLogin(initData: string) {
-        try {
-            const data = await telegramAuth(initData);
+            const data = await telegramAuth(init_data);
             runInAction(() => {
                 this.setUser(data as UserInfo);
                 this.setIsAuth(true);
@@ -115,36 +106,6 @@ export default class UserStore {
         } catch (error) {
             console.error("Error during Telegram authentication:", error);
             this.setServerError(true, 'Server is not responding. Please try again later.');
-        }
-    }
-    
-    async checkAuth() {
-        try {
-            const data = await check();
-            runInAction(() => {
-                this.setUser(data as UserInfo);
-                this.setIsAuth(true);
-                this.setServerError(false);
-            });
-        } catch (error) {
-            console.error("Error during auth check:", error);
-            runInAction(() => {
-                this.setIsAuth(false);
-                this.setUser(null);
-                this.setServerError(true, 'Server is not responding. Please try again later.');
-            });
-        }
-    }
-
-    async fetchMyInfo() {
-        try {
-            const data = await fetchMyInfo();
-            runInAction(() => {
-                this.setUser(data as UserInfo);
-            });
-            
-        } catch (error) {
-            console.error("Error during fetching my info:", error);
         }
     }
 

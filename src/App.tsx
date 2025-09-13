@@ -46,13 +46,6 @@ const App = observer(() => {
         } catch (error) {
           console.error("Telegram authentication error:", error);
         }
-      } else {
-        try {
-          // Выполняем проверку состояния аутентификации
-          await user.checkAuth();
-        } catch (error) {
-          console.error("Check authentication error:", error);
-        }
       }
       setLoading(false);
     };
